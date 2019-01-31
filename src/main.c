@@ -7,7 +7,7 @@
 #if (defined(__MINGW64__) || defined(__MINGW32__))
 typedef __int64                     tw_int64_t;
 typedef unsigned __int64            tw_uint64_t;
-#elif (defined(__aarch64__) || defined(__x86_64__)) && !(defined(__MINGW64__) || defined(__MINGW32__))
+#elif (defined(__BIT_WIDTH__)) && !(defined(__MINGW64__) || defined(__MINGW32__))
 typedef signed long                 tw_int64_t;
 typedef unsigned long               tw_uint64_t;
 #else

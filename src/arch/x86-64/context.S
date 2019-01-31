@@ -21,6 +21,7 @@
  *
  * @return              the context pointer (rax)
  */
+
 function(context_make)
 
     // save the stack top to rax
@@ -47,7 +48,7 @@ function(context_make)
 __end:
     // exit(0)
     xorq %rdi, %rdi
-#ifdef TB_ARCH_ELF
+#ifdef __ELF__
     call _exit@PLT
 #else
     call __exit
