@@ -21,7 +21,7 @@
  *
  * @return              the context pointer (rax)
  */
-function(tb_context_make)
+function(context_make)
 
     // save the stack top to rax
     addq %rsi, %rdi
@@ -63,7 +63,7 @@ endfunc
  *
  * @return              the from-context (context: rax, priv: rdx)
  */
-function(tb_context_jump)
+function(context_jump)
 
     // save registers and construct the current context
     pushq %rbp

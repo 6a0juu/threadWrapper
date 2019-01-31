@@ -1,49 +1,53 @@
 #ifndef TW_SRC_CONTEXT_H
     #define TW_SRC_CONTEXT_H
-    extern "C"{
-        /// the context ref type
-        typedef __tb_typeref__(context);
+    #ifdef __cplusplus
+        extern "C"{
+    #endif
+            /// the context ref type
+            //typedef __tb_typeref__(context);
+            typedef struct __tb_context_dummy_t{
+                signed int dummy;
+            } const* context_ref_t;
+            // the context-from type
+            typedef struct __tb_context_from_t
+            {
+                // the from-context
+                context_ref_t    context;
 
-        // the context-from type
-        typedef struct __tb_context_from_t
-        {
-            // the from-context
-            tb_context_ref_t    context;
+                // the passed user private data
+                const void*       priv;
 
-            // the passed user private data
-            tb_cpointer_t       priv;
+            }context_from_t;
 
-        }tb_context_from_t;
+            /*! the context entry function type
+            *
+            * @param from          the from-context
+            */
+            typedef void (*context_func_t) (context_from_t from);
 
-        /*! the context entry function type
-        *
-        * @param from          the from-context
-        */
-        typedef tb_void_t       (*tb_context_func_t)(tb_context_from_t from);
+            /* //////////////////////////////////////////////////////////////////////////////////////
+            * interfaces
+            */
 
-        /* //////////////////////////////////////////////////////////////////////////////////////
-        * interfaces
-        */
+            /*! make context from the given the stack space and the callback function
+            *
+            * @param stackdata     the stack data
+            * @param stacksize     the stack size
+            * @param func          the entry function
+            *
+            * @return              the context pointer
+            */
+            context_ref_t        context_make(unsigned char* stackdata, unsigned long stacksize, context_func_t func);
 
-        /*! make context from the given the stack space and the callback function
-        *
-        * @param stackdata     the stack data
-        * @param stacksize     the stack size
-        * @param func          the entry function
-        *
-        * @return              the context pointer
-        */
-        tb_context_ref_t        tb_context_make(tb_byte_t* stackdata, tb_size_t stacksize, tb_context_func_t func);
-
-        /*! jump to the given context 
-        *
-        * @param context       the to-context
-        * @param priv          the passed user private data
-        *
-        * @return              the from-context
-        */
-        tb_context_from_t       tb_context_jump(tb_context_ref_t context, tb_cpointer_t priv);
-
-    }
-
+            /*! jump to the given context 
+            *
+            * @param context       the to-context
+            * @param priv          the passed user private data
+            *
+            * @return              the from-context
+            */
+            context_from_t       context_jump(context_ref_t context, const void* priv);
+    #ifdef __cplusplus
+        }
+    #endif
 #endif
