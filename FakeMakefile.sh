@@ -1,3 +1,2 @@
-gcc -c src/arch/context.S
-gcc -c src/main.c
-gcc -o main.o context.o -o out
+gcc -c src/arch/context.S src/main.c
+gcc -o orz main.o context.o
