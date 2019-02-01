@@ -51,7 +51,7 @@ __end:
 #ifdef __ELF__
     call _exit@PLT
 #else
-    call __exit
+    call exit
 #endif
     hlt
 
