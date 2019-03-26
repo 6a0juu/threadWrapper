@@ -55,7 +55,7 @@ __end:
 #endif
     hlt
 
-endfunc
+//endfunc
 
 /* jump context (refer to boost.context)
  *
@@ -108,4 +108,4 @@ function(context_jump)
      */
     jmp *%r8
 
-endfunc
+//endfunc

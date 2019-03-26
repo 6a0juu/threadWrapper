@@ -153,7 +153,7 @@ static void tb_demo_platform_context_perf()
     double duration = difftime(clock(), startime);
 
     // trace
-    printf("perf: %d switches in %lf ms, %lf switches per second", COUNT, duration, (((double)1000 * COUNT) / duration));
+    printf("perf: %d switches in %lf s, %lf switches per second", COUNT, duration, (double)(COUNT / duration));
 }
 
 /* //////////////////////////////////////////////////////////////////////////////////////
