@@ -33,17 +33,40 @@ function(context_make)
     andq %r8, %rax
 
     // reserve space for context-data on context-stack
-    leaq -64(%rax), %rax
+    leaq -56(%rax), %rax
 
-    // context.rip = func
-    movq %rdx, 48(%rax)
+    // context.rbx = func
+    movq %rdx, 32(%rax)
+
+    // context.rip = the address of label __entry
+    leaq __entry(%rip), %rcx
+    movq %rcx, 48(%rax)
 
     // context.end = the address of label __end
     leaq __end(%rip), %rcx
-    movq %rcx, 56(%rax)
+    movq %rcx, 40(%rax)
 
     // return the context pointer
     ret 
+
+__entry:
+
+    // pass old-context(context: rdi, priv: rsi) argument to the context function
+    movq %rax, %rdi
+
+    // patch __end
+    push %rbp
+
+    /* jump to the context function entry(rip)
+     *
+     *             -------------------------------
+     * context: .. |   end   | args | padding ... |
+     *             -------------------------------
+     *             0         8        
+     *             | 16-align for macosx  
+     *            rsp   
+     */
+    jmp *%rbx
 
 __end:
     // exit(0)
@@ -51,9 +74,10 @@ __end:
 #ifdef __ELF__
     call _exit@PLT
 #else
-    call exit
+    call __exit
 #endif
     hlt
+
 
 //endfunc
 
@@ -94,17 +118,14 @@ function(context_jump)
     // return from-context(context: rax, priv: rdx) from jump 
     movq %rsi, %rdx
 
-    // pass old-context(context: rdi, priv: rsi) argument to the context function
-    movq %rax, %rdi
-
     /* jump to the return or function address(rip)
      *
-     *             -------------------------------
-     * context: .. |   end   | args | padding ... |
-     *             -------------------------------
-     *             0         8        
-     *             |         |  
-     *            rsp   16-align for macosx
+     *              ---------------------
+     * context: .. |  args | padding ... |
+     *              ---------------------
+     *             0       8        
+     *             | 16-align for macosx 
+     *            rsp   
      */
     jmp *%r8
 

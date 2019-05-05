@@ -150,10 +150,10 @@ static void tb_demo_platform_context_perf()
     context_jump(contexts[1], contexts);
 
     // computing time
-    double duration = difftime(clock(), startime);
+    double duration = ((double)(end - start))/CLOCKS_PER_SEC;
 
     // trace
-    printf("perf: %d switches in %lf s, %lf switches per second", COUNT, duration, (double)(COUNT / duration));
+    printf("perf: %d switches in %lf s, %lf switches per second", COUNT, duration, (double COUNT) / duration);
 }
 
 /* //////////////////////////////////////////////////////////////////////////////////////
