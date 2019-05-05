@@ -2,7 +2,7 @@
 #include <time.h>
 #include <stdio.h>
 // the switch count
-#define COUNT       (10000000)
+#define COUNT       (100000000)
 
 #if (defined(__MINGW64__) || defined(__MINGW32__))
 typedef __int64                     tw_int64_t;
