@@ -1,8 +1,9 @@
-#include "context.h"
+#include "context/context.h"
 #include <time.h>
 #include <stdio.h>
 // the switch count
 #define COUNT       (100000000)
+#define STACK_SIZE  (1024*1024)
 
 #if (defined(__MINGW64__) || defined(__MINGW32__))
 typedef __int64                     tw_int64_t;
