@@ -1,37 +1,38 @@
 /* //////////////////////////////////////////////////////////////////////////////////////
- * trace
- */
-#define TB_TRACE_MODULE_NAME            "scheduler"
-#define TB_TRACE_MODULE_DEBUG           (0)
-
-/* //////////////////////////////////////////////////////////////////////////////////////
  * includes
  */
 #include "scheduler.h"
 #include "coroutine.h"
-#include "scheduler_io.h"
+//#include "scheduler_io.h"
 
 /* //////////////////////////////////////////////////////////////////////////////////////
  * macros
  */
 
 // the dead cache maximum count
-#ifdef __tb_small__
-#   define TB_SCHEDULER_DEAD_CACHE_MAXN     (64)
-#else
-#   define TB_SCHEDULER_DEAD_CACHE_MAXN     (256)
-#endif
+
+#define TB_SCHEDULER_DEAD_CACHE_MAXN     (256)
 
 /* //////////////////////////////////////////////////////////////////////////////////////
  * private implementation
  */
-static tb_void_t tb_co_scheduler_make_dead(tb_co_scheduler_t* scheduler, tb_coroutine_t* coroutine)
+/*
+coroutine_ref_t tb_coroutine_self()
+{
+    // get coroutine
+    co_scheduler_t* scheduler = (co_scheduler_t*)tb_co_scheduler_self();
+
+    // get running coroutine
+    return scheduler ? (coroutine_ref_t)co_scheduler_running(scheduler) : NULL;
+}
+*/
+static void co_scheduler_make_dead(co_scheduler_t* scheduler, coroutine_t* coroutine)
 {
     // check
-    tb_assert(scheduler && coroutine);
+    //assert(scheduler && coroutine);
 
     // cannot be original coroutine
-    tb_assert(!tb_coroutine_is_original(coroutine));
+    //assert(!tb_coroutine_is_original(coroutine));
 
     // remove this coroutine from the ready coroutines
     tb_list_entry_remove(&scheduler->coroutines_ready, (tb_list_entry_ref_t)coroutine);
@@ -39,13 +40,13 @@ static tb_void_t tb_co_scheduler_make_dead(tb_co_scheduler_t* scheduler, tb_coro
     // append this coroutine to dead coroutines
     tb_list_entry_insert_tail(&scheduler->coroutines_dead, (tb_list_entry_ref_t)coroutine);
 }
-static tb_void_t tb_co_scheduler_make_ready(tb_co_scheduler_t* scheduler, tb_coroutine_t* coroutine)
+static void co_scheduler_make_ready(co_scheduler_t* scheduler, coroutine_t* coroutine)
 {
     // check
-    tb_assert(scheduler && coroutine);
+    //assert(scheduler && coroutine);
 
     // insert this coroutine to ready coroutines 
-    if (__tb_unlikely__(tb_coroutine_is_original(scheduler->running)))
+    if (coroutine_is_original(scheduler->running))//unlikely
     {
         // .. last -> coroutine(inserted)
         tb_list_entry_insert_tail(&scheduler->coroutines_ready, (tb_list_entry_ref_t)coroutine);
@@ -56,13 +57,13 @@ static tb_void_t tb_co_scheduler_make_ready(tb_co_scheduler_t* scheduler, tb_cor
         tb_list_entry_insert_prev(&scheduler->coroutines_ready, (tb_list_entry_ref_t)scheduler->running, (tb_list_entry_ref_t)coroutine);
     }
 }
-static tb_void_t tb_co_scheduler_make_suspend(tb_co_scheduler_t* scheduler, tb_coroutine_t* coroutine)
+static void co_scheduler_make_suspend(co_scheduler_t* scheduler, coroutine_t* coroutine)
 {
     // check
-    tb_assert(scheduler && coroutine);
+    //assert(scheduler && coroutine);
 
     // cannot be original coroutine
-    tb_assert(!tb_coroutine_is_original(coroutine));
+    //assert(!tb_coroutine_is_original(coroutine));
 
     // remove this coroutine from the ready coroutines
     tb_list_entry_remove(&scheduler->coroutines_ready, (tb_list_entry_ref_t)coroutine);
@@ -70,68 +71,68 @@ static tb_void_t tb_co_scheduler_make_suspend(tb_co_scheduler_t* scheduler, tb_c
     // append this coroutine to suspend coroutines
     tb_list_entry_insert_tail(&scheduler->coroutines_suspend, (tb_list_entry_ref_t)coroutine);
 }
-static __tb_inline__ tb_coroutine_t* tb_co_scheduler_next_ready(tb_co_scheduler_t* scheduler)
+static inline coroutine_t* co_scheduler_next_ready(co_scheduler_t* scheduler)
 {
     // check
-    tb_assert(scheduler && scheduler->running && tb_list_entry_size(&scheduler->coroutines_ready));
+    //assert(scheduler && scheduler->running && tb_list_entry_size(&scheduler->coroutines_ready));
 
     // get the next entry 
     tb_list_entry_ref_t entry_next = tb_list_entry_next((tb_list_entry_ref_t)scheduler->running);
-    tb_assert(entry_next);
+    //assert(entry_next);
 
     // is list header? skip it and get the first entry
     if (entry_next == (tb_list_entry_ref_t)&scheduler->coroutines_ready)
         entry_next = tb_list_entry_next(entry_next);
 
     // get the next ready coroutine
-    return (tb_coroutine_t*)tb_list_entry0(entry_next);
+    return (coroutine_t*)tb_list_entry0(entry_next);
 }
 
 /* //////////////////////////////////////////////////////////////////////////////////////
  * implementation
  */
-tb_bool_t tb_co_scheduler_start(tb_co_scheduler_t* scheduler, tb_coroutine_func_t func, tb_cpointer_t priv, tb_size_t stacksize)
+bool co_scheduler_start(co_scheduler_t* scheduler, coroutine_func_t func, void const* priv, tb_size_t stacksize)
 {
     // check
-    tb_assert(func);
+    //assert(func);
 
     // done
-    tb_bool_t       ok = tb_false;
-    tb_coroutine_t* coroutine = tb_null;
+    bool ok = false;
+    coroutine_t* coroutine = NULL;
     do
     {
         // trace
-        tb_trace_d("start ..");
+        printf("start ..\n");
 
         // uses the current scheduler if be null
-        if (!scheduler) scheduler = (tb_co_scheduler_t*)tb_co_scheduler_self();
-        tb_assert_and_check_break(scheduler);
+        if (!scheduler) scheduler = (co_scheduler_t*)co_scheduler_self();
+        //assert(scheduler);
 
         // have been stopped? do not continue to start new coroutines
-        tb_check_break(!scheduler->stopped);
+        //check_break(!scheduler->stopped);
 
         // reuses dead coroutines in init function
         if (tb_list_entry_size(&scheduler->coroutines_dead))
         {
             // get the next entry from head
             tb_list_entry_ref_t entry = tb_list_entry_head(&scheduler->coroutines_dead);
-            tb_assert_and_check_break(entry);
+            //assert(entry);
 
             // remove it from the ready coroutines
             tb_list_entry_remove_head(&scheduler->coroutines_dead);
 
             // get the dead coroutine
-            tb_coroutine_t* coroutine_dead = (tb_coroutine_t*)tb_list_entry0(entry);
+            coroutine_t* coroutine_dead = (coroutine_t*)entry;
 
             // reinit this coroutine
-            coroutine = tb_coroutine_reinit(coroutine_dead, func, priv, stacksize);
+            coroutine = coroutine_reinit(coroutine_dead, func, priv, stacksize);
 
             // failed? exit this coroutine
             if (!coroutine) tb_coroutine_exit(coroutine_dead);
         }
 
         // init coroutine
-        if (!coroutine) coroutine = tb_coroutine_init((tb_co_scheduler_ref_t)scheduler, func, priv, stacksize);
+        if (!coroutine) coroutine = tb_coroutine_init((co_scheduler_ref_t)scheduler, func, priv, stacksize);
         tb_assert_and_check_break(coroutine);
 
         // ready coroutine
@@ -234,10 +235,6 @@ tb_pointer_t tb_co_scheduler_suspend(tb_co_scheduler_t* scheduler, tb_cpointer_t
     // trace
     tb_trace_d("suspend coroutine(%p)", scheduler->running);
 
-#ifdef __tb_debug__
-    // check it
-    tb_coroutine_check(scheduler->running);
-#endif
 
     // pass the private data to resume() first
     scheduler->running->rs_priv = priv;

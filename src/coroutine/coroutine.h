@@ -1,5 +1,5 @@
-#ifndef TB_COROUTINE_IMPL_COROUTINE_H
-#define TB_COROUTINE_IMPL_COROUTINE_H
+#ifndef TW_COROUTINE_IMPL_COROUTINE_H
+#define TW_COROUTINE_IMPL_COROUTINE_H
 
 /* //////////////////////////////////////////////////////////////////////////////////////
  * includes
@@ -9,54 +9,57 @@
 /* //////////////////////////////////////////////////////////////////////////////////////
  * extern
  */
-__tb_extern_c_enter__
+extern "C" {
 
 /* //////////////////////////////////////////////////////////////////////////////////////
  * macros
  */
 
+struct __tw_co_scheduler_dummy_t{
+    signed int dummy;
+} const* co_scheduler_ref_t
+
 // get scheduler
-#define tb_coroutine_scheduler(coroutine)           ((coroutine)->scheduler)
+#define coroutine_scheduler(coroutine)           ((coroutine)->scheduler)
 
 // is original?
-#define tb_coroutine_is_original(coroutine)         ((coroutine)->scheduler == (tb_co_scheduler_ref_t)(coroutine))
+#define coroutine_is_original(coroutine)         ((coroutine)->scheduler == (co_scheduler_ref_t)(coroutine))
 
 /* //////////////////////////////////////////////////////////////////////////////////////
  * types
  */
 
+typedef void       (*coroutine_func_t)(void const* priv);
+
 // the coroutine function type
-typedef struct __tb_coroutine_rs_func_t
+typedef struct __tw_coroutine_rs_func_t
 {
     // the function 
-    tb_coroutine_func_t             func;
+    coroutine_func_t             func;
 
     // the user private data as the argument of function
-    tb_cpointer_t                   priv;
+    void const*                   priv;
 
-}tb_coroutine_rs_func_t;
+}coroutine_rs_func_t;
 
 // the coroutine wait type
-typedef struct __tb_coroutine_rs_wait_t
+typedef struct __tw_coroutine_rs_wait_t
 {
     /* the timer task pointer for ltimer or timer
      *
      * for ltimer:  task
      * for timer:   task & 0x1
      */
-    tb_cpointer_t                   task;
-
-    // the socket
-    tb_socket_ref_t                 sock;
+    void const*                   task;
 
     // the waiting events
-    tb_uint16_t                     events          : 6;
+    unsigned short                     events          : 6;
 
     // the cached events
-    tb_uint16_t                     events_cache    : 6;
+    unsigned short                     events_cache    : 6;
 
     // is waiting?
-    tb_uint16_t                     waiting         : 1;
+    unsigned short                     waiting         : 1;
 
 }tb_coroutine_rs_wait_t;
 
@@ -67,46 +70,41 @@ typedef struct __tb_coroutine_t
      *
      * be placed in the head for optimization
      */
-    tb_list_entry_t                 entry;
+    //tb_list_entry_t                 entry;
 
     // the scheduler
-    tb_co_scheduler_ref_t           scheduler;
+    co_scheduler_ref_t              scheduler;
 
     // the context 
-    tb_context_ref_t                context;
+    context_ref_t                   context;
 
     // the stack base (top)
-    tb_byte_t*                      stackbase;
+    unsigned char*                  stackbase;
 
     // the stack size
-    tb_size_t                       stacksize;
+    unsigned long long              stacksize;
 
     // the passed user private data between priv = resume(priv) and priv = suspend(priv)
-    tb_cpointer_t                   rs_priv;
+    void const*                     rs_priv;
 
     // the passed private data between resume() and suspend()
     union 
     {
         // the function
-        tb_coroutine_rs_func_t      func;
+        coroutine_rs_func_t      func;
 
         // the arguments for wait()
-        tb_coroutine_rs_wait_t      wait;
+        coroutine_rs_wait_t      wait;
 
         // the single entry
-        tb_single_list_entry_t      single_entry;
+        //single_list_entry_t      single_entry;
 
     }                               rs;
 
     // the guard
-    tb_uint16_t                     guard;
+    unsigned short                     guard;
 
-#if defined(__tb_valgrind__) && defined(TB_CONFIG_VALGRIND_HAVE_VALGRIND_STACK_REGISTER)
-    // the valgrind stack id, helo valgrind to understand coroutine
-    tb_uint_t                       valgrind_stack_id;
-#endif
-
-}tb_coroutine_t;
+}coroutine_t;
 
 /* //////////////////////////////////////////////////////////////////////////////////////
  * interfaces
@@ -121,7 +119,7 @@ typedef struct __tb_coroutine_t
  *
  * @return              the coroutine 
  */
-tb_coroutine_t*         tb_coroutine_init(tb_co_scheduler_ref_t scheduler, tb_coroutine_func_t func, tb_cpointer_t priv, tb_size_t stacksize);
+coroutine_t*         coroutine_init(co_scheduler_ref_t scheduler, coroutine_func_t func, void const* priv, unsigned long long stacksize);
 
 /* reinit the given coroutine 
  *
@@ -132,25 +130,18 @@ tb_coroutine_t*         tb_coroutine_init(tb_co_scheduler_ref_t scheduler, tb_co
  *
  * @return              the coroutine
  */
-tb_coroutine_t*         tb_coroutine_reinit(tb_coroutine_t* coroutine, tb_coroutine_func_t func, tb_cpointer_t priv, tb_size_t stacksize);
+coroutine_t*         tb_coroutine_reinit(coroutine_t* coroutine, coroutine_func_t func, void const* priv, unsigned long long stacksize);
 
 /* exit coroutine
  *
  * @param coroutine     the coroutine
  */
-tb_void_t               tb_coroutine_exit(tb_coroutine_t* coroutine);
+void               tb_coroutine_exit(coroutine_t* coroutine);
 
-#ifdef __tb_debug__
-/* check coroutine
- *
- * @param coroutine     the coroutine
- */
-tb_void_t               tb_coroutine_check(tb_coroutine_t* coroutine);
-#endif
 
 /* //////////////////////////////////////////////////////////////////////////////////////
  * extern
  */
-__tb_extern_c_leave__
+}
 
 #endif

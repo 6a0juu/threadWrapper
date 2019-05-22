@@ -4,12 +4,12 @@
         extern "C"{
     #endif
             /// the context ref type
-            //typedef __tb_typeref__(context);
-            typedef struct __tb_context_dummy_t{
+            //typedef __tw_typeref__(context);
+            typedef struct __tw_context_dummy_t{
                 signed int dummy;
             } const* context_ref_t;
             // the context-from type
-            typedef struct __tb_context_from_t
+            typedef struct __tw_context_from_t
             {
                 // the from-context
                 context_ref_t    context;
