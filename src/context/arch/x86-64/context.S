@@ -1,5 +1,5 @@
 
-/* make context (refer to boost.context)
+/* make context 
  *
  *             -------------------------------------------------------------------------------
  * stackdata: |                                                |         context        |||||||
@@ -81,7 +81,7 @@ __end:
 
 //endfunc
 
-/* jump context (refer to boost.context)
+/* jump context
  *
  * @param context       the to-context (rdi)
  * @param priv          the passed user private data (rsi)
